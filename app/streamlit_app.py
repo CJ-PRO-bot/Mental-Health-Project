@@ -169,33 +169,40 @@ else:
         "Values below 0 are clipped to 0 because deaths cannot be negative.)"
     )
 
-
 # -----------------------------
 # 5. Plot with forecast point
 # -----------------------------
 
 st.subheader("4. Historical Data with Forecast Point")
 
-fig2, ax2 = plt.subplots(figsize=(8, 4))                                 # New figure for combined plot
-ax2.plot(df_yearly["year"], df_yearly["value"], marker="o", label="Historical")  # Historical line
+# Prepare base historical data as lists
+years = df_yearly["year"].tolist()
+values = df_yearly["value"].tolist()
 
+# If forecasting a future year, append forecast to the line
+forecast_added = False
 if selected_year > max_year:
-    # Add forecast point to the chart only if the selected year is beyond historical range
-    _, clipped_pred = predict_deaths(selected_year)                      # Get clipped prediction
-    ax2.scatter([selected_year], [clipped_pred], label="Forecast", zorder=5)  # Plot forecast point
-    ax2.axvline(x=selected_year, linestyle="--", alpha=0.5)                   # Vertical helper line
+    _, clipped_pred = predict_deaths(selected_year)
+    years.append(selected_year)
+    values.append(clipped_pred)
+    forecast_added = True
 
-ax2.set_xlabel("Year")                                # X-axis label
-ax2.set_ylabel("Number of Deaths")                    # Y-axis label
-ax2.set_title("Under-5 Deaths with Forecast")         # Plot title
-ax2.grid(True)                                        # Enable grid
-ax2.legend()                                          # Show legend
+# Create the figure
+fig2, ax2 = plt.subplots(figsize=(8, 4))
+
+# Plot the (possibly extended) line
+ax2.plot(years, values, marker="o", label="Historical + Forecast")
+
+# Highlight forecast point if it exists
+if forecast_added:
+    ax2.scatter([selected_year], [clipped_pred], s=80, label="Forecast", zorder=5)
+    ax2.axvline(x=selected_year, linestyle="--", alpha=0.5)
+
+ax2.set_xlabel("Year")
+ax2.set_ylabel("Number of Deaths")
+ax2.set_title("Under-5 Deaths with Forecast")
+ax2.grid(True)
+ax2.legend()
 
 st.pyplot(fig2)  # Show combined historical + forecast chart
 
-
-st.write("---")  # Horizontal rule for separation
-st.caption(
-    "This app is a teaching/demo tool for healthcare data science in Bhutan. "
-    "Model predictions are illustrative and should not be used as official health statistics."
-)
